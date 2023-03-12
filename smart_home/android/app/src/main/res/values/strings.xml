@@ -1,0 +1,7 @@
+<?xml version="1.0" encoding="utf-8" ?>
+<resources>
+    <string name="app_name">Login Smart Home 2022</string>
+    <string name="facebook_app_id">2115967798605272</string>
+    <string name="fb_login_protocol_scheme">fb2115967798605272</string>
+    <string name="facebook_client_token">d3eeeb82f58f2a42aa94c4287268d285</string>
+</resources>
