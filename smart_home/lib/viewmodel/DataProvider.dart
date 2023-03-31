@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
-import 'package:smart_home/model/MessageModel.dart';
 import 'package:dio/dio.dart';
+import 'package:smart_home/models/MessageModel.dart';
 
 class DataProvider extends ChangeNotifier {
   List<MessageModel> list = [];

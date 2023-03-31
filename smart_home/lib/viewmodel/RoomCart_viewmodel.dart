@@ -1,5 +1,5 @@
 import 'package:flutter/material.dart';
-import 'package:smart_home/model/RoomCart.dart';
+import 'package:smart_home/models/RoomCart.dart';
 
 List<RoomCart> rooms = [
   new RoomCart(1, Icons.import_contacts_sharp, 'Living Room', '25', '70', 4)
