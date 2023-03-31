@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:lottie/lottie.dart';
-import 'package:smart_home/modules/login/Login.dart';
+import 'package:smart_home/modules/login/login/login_page.dart';
 
 class StartSplashScreen extends StatefulWidget {
   const StartSplashScreen({Key? key}) : super(key: key);

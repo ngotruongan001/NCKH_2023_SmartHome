@@ -8,7 +8,7 @@ import 'package:smart_home/authentication/auth_services.dart';
 import 'package:smart_home/common/widgets/ProfileMenu.dart';
 import 'package:smart_home/common/widgets/Widget/Profile/Feedback.dart';
 import 'package:smart_home/common/widgets/Widget/Profile/ViewProfile.dart';
-import 'package:smart_home/modules/login/Login.dart';
+import 'package:smart_home/modules/login/login/login_page.dart';
 import 'package:smart_home/themes/theme_data.dart';
 import 'package:smart_home/themes/theme_provider.dart';
 

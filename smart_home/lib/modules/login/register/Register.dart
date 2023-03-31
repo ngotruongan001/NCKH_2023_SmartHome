@@ -7,7 +7,7 @@ import 'package:fluttertoast/fluttertoast.dart';
 import 'package:lottie/lottie.dart';
 import 'package:smart_home/common/widgets/bottom_bar.dart';
 import 'package:smart_home/models/UserModel.dart';
-import 'package:smart_home/modules/login/Login.dart';
+import 'package:smart_home/modules/login/login/login_page.dart';
 
 class Register extends StatefulWidget {
   const Register({Key? key}) : super(key: key);

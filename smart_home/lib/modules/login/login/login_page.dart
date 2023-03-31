@@ -7,8 +7,8 @@ import 'package:lottie/lottie.dart';
 import 'package:provider/provider.dart';
 import 'package:smart_home/authentication/auth_services.dart';
 import 'package:smart_home/modules/splash_page/FlashScreen.dart';
-import 'package:smart_home/modules/login/ForgotPassword.dart';
-import 'package:smart_home/modules/login/Register.dart';
+import 'package:smart_home/modules/login/forgot_password/ForgotPassword.dart';
+import 'package:smart_home/modules/login/register/Register.dart';
 import 'package:smart_home/string/app_strings.dart';
 import 'package:smart_home/themes/theme_provider.dart';
 
