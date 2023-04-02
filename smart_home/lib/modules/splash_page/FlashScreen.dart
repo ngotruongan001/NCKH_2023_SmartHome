@@ -13,7 +13,7 @@ class _FlashScreenState extends State<FlashScreen> {
   @override
   void initState(){
     Future.delayed(Duration(seconds: 4), () {
-      Navigator.pushReplacement(
+      Navigator.push(
           context, MaterialPageRoute(builder: (context) => BottomBar()));
     });
     super.initState();

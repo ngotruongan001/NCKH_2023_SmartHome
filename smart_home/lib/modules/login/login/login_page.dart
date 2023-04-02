@@ -1,15 +1,18 @@
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:flutter_facebook_auth/flutter_facebook_auth.dart';
 import 'package:fluttertoast/fluttertoast.dart';
 import 'package:get/get.dart';
 import 'package:lottie/lottie.dart';
 import 'package:provider/provider.dart';
 import 'package:smart_home/authentication/auth_services.dart';
+import 'package:smart_home/modules/login/login/cubit/login_cubit.dart';
 import 'package:smart_home/modules/splash_page/FlashScreen.dart';
 import 'package:smart_home/modules/login/forgot_password/ForgotPassword.dart';
 import 'package:smart_home/modules/login/register/Register.dart';
 import 'package:smart_home/string/app_strings.dart';
+import 'package:smart_home/themes/app_dimension.dart';
 import 'package:smart_home/themes/theme_provider.dart';
 
 class LoginPage extends StatefulWidget {
@@ -21,13 +24,8 @@ class LoginPage extends StatefulWidget {
 
 class _LoginPageState extends State<LoginPage> {
   Map? _userData;
-  late String email, pass;
-
+  var bloc = LoginCubit();
   final _formKey = GlobalKey<FormState>();
-
-  // editing controller
-  final TextEditingController emailController = TextEditingController();
-  final TextEditingController passwordController = TextEditingController();
 
   // firebase
   final _auth = FirebaseAuth.instance;
@@ -36,10 +34,23 @@ class _LoginPageState extends State<LoginPage> {
   String? errorMessage;
 
   @override
+  void initState() {
+    super.initState();
+    bloc.emailController.text = 'ngoctinhxx@gmail.com';
+    bloc.passwordController.text = '123456';
+  }
+
+  @override
+  void dispose() {
+    super.dispose();
+    bloc.close();
+  }
+
+  @override
   Widget build(BuildContext context) {
     final emailField = TextFormField(
         autofocus: false,
-        controller: emailController,
+        controller: bloc.emailController,
         keyboardType: TextInputType.emailAddress,
         validator: (value) {
           if (value!.isEmpty) {
@@ -52,8 +63,8 @@ class _LoginPageState extends State<LoginPage> {
           }
           return null;
         },
-        onSaved: (value) {
-          emailController.text = value!;
+        onSaved: (newValue) {
+          bloc.handleChangeEmailText(newValue ?? '');
         },
         textInputAction: TextInputAction.next,
         decoration: InputDecoration(
@@ -70,11 +81,10 @@ class _LoginPageState extends State<LoginPage> {
           fillColor: Colors.deepOrange[100],
           filled: true,
         ));
-
     //password field
     final passwordField = TextFormField(
         autofocus: false,
-        controller: passwordController,
+        controller: bloc.passwordController,
         obscureText: true,
         validator: (value) {
           RegExp regex = new RegExp(r'^.{6,}$');
@@ -85,8 +95,8 @@ class _LoginPageState extends State<LoginPage> {
             return ("Nhập mật khẩu hợp lệ(Tối thiểu 6 kí tự)");
           }
         },
-        onSaved: (value) {
-          passwordController.text = value!;
+        onSaved: (newValue) {
+          bloc.handleChangePasswordText(newValue ?? '');
         },
         textInputAction: TextInputAction.done,
         decoration: InputDecoration(
@@ -107,11 +117,11 @@ class _LoginPageState extends State<LoginPage> {
             color: Colors.deepOrange,
           ),
         ));
-
     final loginButton = InkWell(
         onTap: () {
-          print(emailController.text);
-          signIn(emailController.text, passwordController.text);
+          if (_formKey.currentState!.validate()) {
+            bloc.login();
+          }
         },
         child: Material(
           elevation: 10,
@@ -123,245 +133,246 @@ class _LoginPageState extends State<LoginPage> {
             ),
             height: 50,
             width: MediaQuery.of(context).size.width,
-            child:  Center(
-              child: Text(
-                AppStrings.loginTitle.tr,
-                style: TextStyle(
-                    fontSize: 20,
-                    fontWeight: FontWeight.bold,
-                    color: Colors.white),
-              ),
+            child: BlocBuilder(
+              bloc: bloc,
+              builder: (context, state) {
+                if (state is LoginLoading) {
+                  return Row(
+                    mainAxisAlignment: MainAxisAlignment.center,
+                    children: [
+                      Text(
+                        AppStrings.loading.tr,
+                        style: TextStyle(
+                            fontSize: 20,
+                            fontWeight: FontWeight.bold,
+                            color: Colors.white),
+                      ),
+                      SizedBox(
+                        width: 5.0.r,
+                      ),
+                      _widgetCircleLoading(height: 18.0.r, width: 18.0.r),
+                    ],
+                  );
+                }
+                return Center(
+                  child: Text(
+                    AppStrings.loginTitle.tr,
+                    style: TextStyle(
+                        fontSize: 20,
+                        fontWeight: FontWeight.bold,
+                        color: Colors.white),
+                  ),
+                );
+              },
             ),
           ),
         ));
-
     Size size = MediaQuery.of(context).size;
-
-    return Scaffold(
-        body: SafeArea(
-      child: SingleChildScrollView(
-        child: Form(
-          key: _formKey,
-          child: Column(
-            mainAxisAlignment: MainAxisAlignment.start,
-            children: [
-              Stack(
-                children: [
-                  ClipPath(
-                    clipper: DrawClip(),
-                    child: Container(
-                      height: 280,
-                      width: double.infinity,
-                      decoration: const BoxDecoration(
-                        gradient: LinearGradient(
-                          colors: [Color(0xffee4c14), Color(0xffffc371)],
-                          begin: Alignment.topLeft,
-                          end: Alignment.bottomRight,
+    return BlocConsumer(
+        bloc: bloc,
+        listener: (context, state) {
+          if (state is LoginFailure) {
+            Fluttertoast.showToast(msg: state.errorMessage);
+          }
+          if (state is LoginSuccess) {
+            Fluttertoast.showToast(msg: "Login success!!!");
+            Navigator.push(context,
+                MaterialPageRoute(builder: (context) => FlashScreen()));
+          }
+        },
+        builder: (context, state) {
+          return Scaffold(
+              body: SafeArea(
+            child: SingleChildScrollView(
+              child: Form(
+                key: _formKey,
+                child: Column(
+                  mainAxisAlignment: MainAxisAlignment.start,
+                  children: [
+                    Stack(
+                      children: [
+                        ClipPath(
+                          clipper: DrawClip(),
+                          child: Container(
+                            height: 280,
+                            width: double.infinity,
+                            decoration: const BoxDecoration(
+                              gradient: LinearGradient(
+                                colors: [Color(0xffee4c14), Color(0xffffc371)],
+                                begin: Alignment.topLeft,
+                                end: Alignment.bottomRight,
+                              ),
+                            ),
+                          ),
                         ),
+                        SizedBox(
+                          height: 270,
+                          width: double.infinity,
+                          child: Lottie.asset('assets/json/login.json'),
+                        ),
+                      ],
+                    ),
+                    const SizedBox(
+                      height: 20,
+                    ),
+                    Padding(
+                      padding:
+                          EdgeInsets.symmetric(horizontal: size.width * 0.1),
+                      child: const Text(
+                        'SIGN IN',
+                        style: TextStyle(
+                            fontSize: 30,
+                            fontWeight: FontWeight.bold,
+                            color: Colors.deepOrange),
                       ),
                     ),
-                  ),
-                  SizedBox(
-                    height: 270,
-                    width: double.infinity,
-                    child: Lottie.asset('assets/json/login.json'),
-                  ),
-                ],
-              ),
-              const SizedBox(
-                height: 20,
-              ),
-              Padding(
-                padding: EdgeInsets.symmetric(horizontal: size.width * 0.1),
-                child: const Text(
-                  'SIGN IN',
-                  style: TextStyle(
-                      fontSize: 30,
-                      fontWeight: FontWeight.bold,
-                      color: Colors.deepOrange),
-                ),
-              ),
-              const SizedBox(
-                height: 20,
-              ),
-              Padding(
-                  padding: EdgeInsets.symmetric(
-                      horizontal: size.width * 0.1, vertical: 10),
-                  child: emailField),
-              Padding(
-                  padding: EdgeInsets.symmetric(
-                      horizontal: size.width * 0.1, vertical: 10),
-                  child: passwordField),
-              Padding(
-                padding: EdgeInsets.symmetric(
-                    horizontal: size.width * 0.1, vertical: 5),
-                child: Row(
-                    mainAxisAlignment: MainAxisAlignment.end,
-                    children: <Widget>[
-                      GestureDetector(
-                        onTap: () {
-                          Navigator.push(
-                              context,
-                              MaterialPageRoute(
-                                  builder: (context) =>
-                                      const ForgotPassword()));
-                        },
-                        child: const Text(
-                          " Forgot Password?",
-                          style: TextStyle(
-                              color: Colors.redAccent,
-                              fontWeight: FontWeight.bold,
-                              fontSize: 16),
-                        ),
-                      )
-                    ]),
-              ),
-              Padding(
-                  padding: EdgeInsets.symmetric(
-                      horizontal: size.width * 0.1, vertical: 20),
-                  child: loginButton),
-              Center(
-                child: Text(
-                  "OR",
-                  style: TextStyle(
-                      fontWeight: FontWeight.bold,
-                      fontSize: 15,
-                      color: context.watch<ThemeProvider>().textColor),
-                ),
-              ),
-              Padding(
-                padding: EdgeInsets.symmetric(horizontal: size.width * 0.1),
-                child: Row(
-                  mainAxisAlignment: MainAxisAlignment.spaceAround,
-                  crossAxisAlignment: CrossAxisAlignment.center,
-                  children: [
-                    GestureDetector(
-                      onTap: () async {
-                        final result = await FacebookAuth.i
-                            .login(permissions: ["public_profile", "email"]);
-                        if (result.status == LoginStatus.success) {
-                          final requestData = await FacebookAuth.i
-                              .getUserData(fields: "email, name");
-                          setState(() {
-                            _userData = requestData;
-                          });
-                        }
-                        Navigator.push(
-                            context,
-                            MaterialPageRoute(
-                                builder: (context) => FlashScreen()));
-                      },
-                      child: SizedBox(
-                          height: 80,
-                          width: 80,
-                          child: Lottie.asset('assets/json/facebook.json',
-                              repeat: false)),
+                    const SizedBox(
+                      height: 20,
                     ),
-                    GestureDetector(
-                      onTap: () async {
-                        // TwitterServicce().signInWithTwitter();
-                        // Navigator.push(context,
-                        //     MaterialPageRoute(builder: (context) => FlashScreen()));
-                      },
-                      child: SizedBox(
-                          height: 80,
-                          width: 80,
-                          child: Lottie.asset('assets/json/twitter2.json',
-                              repeat: false)),
+                    Padding(
+                        padding: EdgeInsets.symmetric(
+                            horizontal: size.width * 0.1, vertical: 10),
+                        child: emailField),
+                    Padding(
+                        padding: EdgeInsets.symmetric(
+                            horizontal: size.width * 0.1, vertical: 10),
+                        child: passwordField),
+                    Padding(
+                      padding: EdgeInsets.symmetric(
+                          horizontal: size.width * 0.1, vertical: 5),
+                      child: Row(
+                          mainAxisAlignment: MainAxisAlignment.end,
+                          children: <Widget>[
+                            GestureDetector(
+                              onTap: () {
+                                Navigator.push(
+                                    context,
+                                    MaterialPageRoute(
+                                        builder: (context) =>
+                                            const ForgotPassword()));
+                              },
+                              child: const Text(
+                                " Forgot Password?",
+                                style: TextStyle(
+                                    color: Colors.redAccent,
+                                    fontWeight: FontWeight.bold,
+                                    fontSize: 16),
+                              ),
+                            )
+                          ]),
                     ),
-                    GestureDetector(
-                      onTap: () async {
-                        await FirebaseServices().signInWithGoogle();
-                        Navigator.push(
-                            context,
-                            MaterialPageRoute(
-                                builder: (context) => FlashScreen()));
-                      },
-                      child: Container(
-                          decoration: const BoxDecoration(),
-                          height: 75,
-                          width: 75,
-                          child: Lottie.asset('assets/json/google.json',
-                              repeat: false)),
-                    ),
-                  ],
-                ),
-              ),
-              Padding(
-                padding: EdgeInsets.symmetric(
-                    horizontal: size.width * 0.1, vertical: 5),
-                child: Row(
-                    mainAxisAlignment: MainAxisAlignment.center,
-                    children: <Widget>[
-                      Text(
-                        "Do not have an account?",
+                    Padding(
+                        padding: EdgeInsets.symmetric(
+                            horizontal: size.width * 0.1, vertical: 20),
+                        child: loginButton),
+                    Center(
+                      child: Text(
+                        "OR",
                         style: TextStyle(
+                            fontWeight: FontWeight.bold,
                             fontSize: 15,
                             color: context.watch<ThemeProvider>().textColor),
                       ),
-                      GestureDetector(
-                        onTap: () {
-                          Navigator.push(
-                              context,
-                              MaterialPageRoute(
-                                  builder: (context) => const Register()));
-                        },
-                        child: const Text(
-                          " Sign Up",
-                          style: TextStyle(
-                            color: Colors.redAccent,
-                            fontWeight: FontWeight.bold,
-                            fontSize: 16,
+                    ),
+                    Padding(
+                      padding:
+                          EdgeInsets.symmetric(horizontal: size.width * 0.1),
+                      child: Row(
+                        mainAxisAlignment: MainAxisAlignment.spaceAround,
+                        crossAxisAlignment: CrossAxisAlignment.center,
+                        children: [
+                          GestureDetector(
+                            onTap: () async {
+                              bloc.loginFacebook();
+                            },
+                            child: SizedBox(
+                                height: 80,
+                                width: 80,
+                                child: Lottie.asset('assets/json/facebook.json',
+                                    repeat: false)),
                           ),
-                        ),
-                      )
-                    ]),
-              )
-            ],
-          ),
-        ),
-      ),
-    ));
+                          GestureDetector(
+                            onTap: () async {
+                              // TwitterServicce().signInWithTwitter();
+                              // Navigator.push(context,
+                              //     MaterialPageRoute(builder: (context) => FlashScreen()));
+                              Navigator.of(context).pushReplacement(
+                                  MaterialPageRoute(
+                                      builder: (context) => FlashScreen()));
+                            },
+                            child: SizedBox(
+                                height: 80,
+                                width: 80,
+                                child: Lottie.asset('assets/json/twitter2.json',
+                                    repeat: false)),
+                          ),
+                          GestureDetector(
+                            onTap: () async {
+                              bloc.loginGmail();
+                            },
+                            child: Container(
+                                decoration: const BoxDecoration(),
+                                height: 75,
+                                width: 75,
+                                child: Lottie.asset('assets/json/google.json',
+                                    repeat: false)),
+                          ),
+                        ],
+                      ),
+                    ),
+                    Padding(
+                      padding: EdgeInsets.symmetric(
+                          horizontal: size.width * 0.1, vertical: 5),
+                      child: Row(
+                          mainAxisAlignment: MainAxisAlignment.center,
+                          children: <Widget>[
+                            Text(
+                              "Do not have an account?",
+                              style: TextStyle(
+                                  fontSize: 15,
+                                  color:
+                                      context.watch<ThemeProvider>().textColor),
+                            ),
+                            GestureDetector(
+                              onTap: () {
+                                Navigator.push(
+                                    context,
+                                    MaterialPageRoute(
+                                        builder: (context) =>
+                                            const Register()));
+                              },
+                              child: const Text(
+                                " Sign Up",
+                                style: TextStyle(
+                                  color: Colors.redAccent,
+                                  fontWeight: FontWeight.bold,
+                                  fontSize: 16,
+                                ),
+                              ),
+                            )
+                          ]),
+                    )
+                  ],
+                ),
+              ),
+            ),
+          ));
+        });
   }
 
-  void signIn(String email, String password) async {
-    if (_formKey.currentState!.validate()) {
-      try {
-        await _auth
-            .signInWithEmailAndPassword(email: email, password: password)
-            .then((uid) => {
-                  Fluttertoast.showToast(msg: "Đăng nhập thành công"),
-                  Navigator.of(context).pushReplacement(
-                      MaterialPageRoute(builder: (context) => FlashScreen())),
-                });
-      } on FirebaseAuthException catch (error) {
-        switch (error.code) {
-          case "invalid-email":
-            errorMessage = "Email không đúng định dạng.";
-
-            break;
-          case "wrong-password":
-            errorMessage = "Mật khẩu của bạn không đúng.";
-            break;
-          case "user-not-found":
-            errorMessage = "Tài khoản này không tồn tại.";
-            break;
-          case "user-disabled":
-            errorMessage = "Tài khoản của bạn đã bị khoá.";
-            break;
-          case "too-many-requests":
-            errorMessage = "Quá nhiều yêu cầu";
-            break;
-          case "operation-not-allowed":
-            errorMessage = "Đăng nhập bằng mật khẩu và email không được bật";
-            break;
-          default:
-            errorMessage = "Đã xảy ra lỗi không xác định.";
-        }
-        Fluttertoast.showToast(msg: errorMessage!);
-        print(error.code);
-      }
-    }
+  Widget _widgetCircleLoading({
+    required double height,
+    required double width,
+    Color? backgroudColor,
+    double? strokeWidth,
+  }) {
+    return SizedBox(
+        width: height,
+        height: width,
+        child: CircularProgressIndicator(
+          color: Colors.white,
+          strokeWidth: 4.0.r,
+        ));
   }
 }
 

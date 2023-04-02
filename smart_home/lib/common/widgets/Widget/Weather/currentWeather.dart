@@ -191,7 +191,7 @@ class _CurrentWeatherPageState extends State<CurrentWeatherPage> {
                         color: context.watch<ThemeProvider>().textColor),
                   ),
                   Text(
-                    "${_weather.humidity.toInt()}%",
+                    "${_weather.humidity!.toInt()}%",
                     textAlign: TextAlign.left,
                     style:  TextStyle(
                         fontWeight: FontWeight.w700,
@@ -263,17 +263,17 @@ class _CurrentWeatherPageState extends State<CurrentWeatherPage> {
                         Container(
                             margin: const EdgeInsets.all(5.0),
                             child: Text(
-                              _weather.city,
+                              _weather.city ?? '',
                               style: const TextStyle(
                                   fontWeight: FontWeight.bold,
                                   fontSize: 27,
                                   color: Colors.white,),
                             )),
-                        getWeatherIcon(_weather.icon),
+                        getWeatherIcon(_weather.icon ?? ''),
                         Container(
                             margin: const EdgeInsets.all(5.0),
                             child: Text(
-                              _weather.description.capitalizeFirstOfEach,
+                              _weather.description!.capitalizeFirstOfEach,
                               style: const TextStyle(
                                   fontWeight: FontWeight.normal,
                                   fontSize: 16,
@@ -282,7 +282,7 @@ class _CurrentWeatherPageState extends State<CurrentWeatherPage> {
                         Container(
                             margin: const EdgeInsets.all(5.0),
                             child: Text(
-                              "H:${_weather.high.toInt()}° L:${_weather.low.toInt()}°",
+                              "H:${_weather.high!.toInt()}° L:${_weather.low!.toInt()}°",
                               textAlign: TextAlign.left,
                               style: const TextStyle(
                                   fontWeight: FontWeight.normal,
@@ -293,7 +293,7 @@ class _CurrentWeatherPageState extends State<CurrentWeatherPage> {
               Column(children: <Widget>[
                 Container(
                     child: Text(
-                      "${_weather.temp.toInt()}°",
+                      "${_weather.temp!.toInt()}°",
                       textAlign: TextAlign.left,
                       style: const TextStyle(
                           fontWeight: FontWeight.bold,
@@ -303,7 +303,7 @@ class _CurrentWeatherPageState extends State<CurrentWeatherPage> {
                 Container(
                     margin: const EdgeInsets.all(0),
                     child: Text(
-                      "Feels like ${_weather.feelsLike.toInt()}°",
+                      "Feels like ${_weather.feelsLike!.toInt()}°",
                       textAlign: TextAlign.left,
                       style: const TextStyle(
                           fontWeight: FontWeight.normal,

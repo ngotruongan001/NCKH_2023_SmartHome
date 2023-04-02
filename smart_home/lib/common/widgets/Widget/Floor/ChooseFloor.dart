@@ -4,7 +4,7 @@ import 'package:smart_home/themes/theme_provider.dart';
 
 class ChooseFloor extends StatefulWidget {
   const ChooseFloor({Key? key, required this.handleClick, required this.setId}) : super(key: key);
-  final Function handleClick;
+  final Function(int) handleClick;
   final num setId;
   @override
   State<ChooseFloor> createState() => _ChooseFloorState();
@@ -41,7 +41,6 @@ class _ChooseFloorState extends State<ChooseFloor> {
                 style: TextStyle(fontSize: 12,fontWeight: FontWeight.bold,
                   color: widget.setId == 0?  context.watch<ThemeProvider>().textClickColor:  context.watch<ThemeProvider>().textNonClickColor,
                 ),
-
               ),
             ),
           ),
